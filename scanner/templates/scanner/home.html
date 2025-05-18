@@ -1,0 +1,38 @@
+{% extends 'scanner/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4">Welcome to Document Scanner</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Recent Documents</h5>
+                <div id="documents-list">
+                    {% if documents %}
+                        {% for document in documents %}
+                            <div class="document-item mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6>{{ document.title }}</h6>
+                                        <small class="text-muted">Uploaded: {{ document.uploaded_at|date:"F j, Y H:i" }}</small>
+                                    </div>
+                                    <div>
+                                        <a href="{{ document.file.url }}" class="btn btn-sm btn-primary" target="_blank">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'scanner:document_detail' document.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-info-circle"></i> Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No documents found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

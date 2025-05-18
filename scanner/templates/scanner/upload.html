@@ -1,0 +1,65 @@
+{% extends 'scanner/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2 class="mb-4">Upload Document</h2>
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="upload-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label">Document Title</label>
+                        <input type="text" class="form-control" id="id_title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_file" class="form-label">Document File</label>
+                        <input type="file" class="form-control" id="id_file" name="file" required accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Upload Document</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('upload-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    
+    submitButton.disabled = true;
+    submitButton.textContent = 'Uploading...';
+    
+    fetch('{% url "scanner:api_upload" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '{% url "scanner:home" %}';
+        } else {
+            alert('Upload failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred during upload');
+    })
+    .finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+    });
+});
+</script>
+{% endblock %}

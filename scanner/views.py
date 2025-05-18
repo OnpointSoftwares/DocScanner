@@ -1,28 +1,42 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from .models import Document
-from .serializers import DocumentSerializer
-import os
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
 from django.conf import settings
+import os
+from .models import Document
 
-class DocumentViewSet(viewsets.ModelViewSet):
-    queryset = Document.objects.all()
-    serializer_class = DocumentSerializer
+def home(request):
+    documents = Document.objects.order_by('-uploaded_at')[:10]
+    return render(request, 'scanner/home.html', {'documents': documents})
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+def upload(request):
+    return render(request, 'scanner/upload.html')
+
+def document_detail(request, document_id):
+    document = get_object_or_404(Document, pk=document_id)
+    return render(request, 'scanner/document_detail.html', {'document': document})
+
+@csrf_exempt
+def api_upload(request):
+    if request.method == 'POST':
+        title = request.POST.get('title', '')
+        file = request.FILES.get('file')
         
-        # Extract metadata (basic for now, can be expanded)
-        document = serializer.instance
+        if not file:
+            return JsonResponse({'success': False, 'error': 'No file uploaded'}, status=400)
+            
+        document = Document.objects.create(title=title, file=file)
+        
+        # Extract metadata
         metadata = {
-            'file_size': os.path.getsize(document.file.path),
-            'file_extension': os.path.splitext(document.file.name)[1].lower(),
+            'file_size': file.size,
+            'file_extension': os.path.splitext(file.name)[1].lower(),
             'upload_date': document.uploaded_at.isoformat()
         }
         document.metadata = metadata
         document.save()
         
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)

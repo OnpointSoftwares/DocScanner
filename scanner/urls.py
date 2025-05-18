@@ -1,10 +1,11 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import DocumentViewSet
+from django.urls import path
+from . import views
 
-router = DefaultRouter()
-router.register(r'documents', DocumentViewSet)
+app_name = 'scanner'
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', views.home, name='home'),
+    path('upload/', views.upload, name='upload'),
+    path('document/<int:document_id>/', views.document_detail, name='document_detail'),
+    path('api/upload/', views.api_upload, name='api_upload'),
 ]
